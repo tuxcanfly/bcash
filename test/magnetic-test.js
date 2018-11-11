@@ -19,6 +19,9 @@ let flags = [
   common.flags.MANDATORY_VERIFY_FLAGS
 ];
 
+// TODO: update standard flags
+flags = flags.map(flag => flag & ~common.flags.VERIFY_COMPRESSED_PUBKEYTYPE);
+
 const priv = '0000000000000000000000000000000000000000000000000000000000000001';
 const key = Keyring.fromPrivate(Buffer.from(priv, 'hex'));
 
@@ -45,7 +48,7 @@ function isError(stack, script, error) {
 }
 
 describe('Magnetic', function() {
-  it('should fail datasig ops on invalid stack', async () => {
+  it('should fail datasig on invalid stack', async () => {
     for (const op of ['OP_CHECKDATASIG', 'OP_CHECKDATASIGVERIFY']) {
       const stack = new Stack();
       const script = Script.fromString(op);
@@ -60,7 +63,7 @@ describe('Magnetic', function() {
     }
   });
 
-  it('should match datasig ops on empty stack', async () => {
+  it('should match datasig on empty stack', async () => {
     const stack = new Stack();
     stack.push(EMPTY);
     stack.push(EMPTY);
@@ -71,7 +74,7 @@ describe('Magnetic', function() {
       'CHECKDATASIGVERIFY');
   });
 
-  it('should match various pubkey encoding', async () => {
+  it('should match datasig on various pubkey encoding', async () => {
     const stack = new Stack();
     stack.push(EMPTY);
     stack.push(EMPTY);
@@ -93,7 +96,7 @@ describe('Magnetic', function() {
       'CHECKDATASIGVERIFY');
   });
 
-  it('should match valid signature', async () => {
+  it('should match datasig on valid signature', async () => {
     const msg = EMPTY;
     const hash = sha256.digest(msg);
     const sig = key.sign(hash);
@@ -107,7 +110,7 @@ describe('Magnetic', function() {
     isSuccess(stack, Script.fromString('OP_CHECKDATASIGVERIFY'), []);
   });
 
-  it('should fail on hybrid key with strictenc', async () => {
+  it('should fail datasig on hybrid key with strictenc', async () => {
     flags = flags.map(flag => flag | common.flags.VERIFY_STRICTENC);
 
     const hybrid = secp256k1.publicKeyConvert(key.publicKey, false);
@@ -122,7 +125,7 @@ describe('Magnetic', function() {
     isError(stack, Script.fromString('OP_CHECKDATASIGVERIFY'), 'PUBKEYTYPE');
   });
 
-  it('should match signature on hybrid key w/o strictenc', async () => {
+  it('should match datasig on hybrid key w/o strictenc', async () => {
     flags = flags.map(flag => flag & ~common.flags.VERIFY_STRICTENC);
 
     const hybrid = secp256k1.publicKeyConvert(key.publicKey, false);
@@ -138,7 +141,7 @@ describe('Magnetic', function() {
       'CHECKDATASIGVERIFY');
   });
 
-  it('should fail on invalid signature with strictenc', async () => {
+  it('should fail datasig on invalid signature with nullfail', async () => {
     flags = flags.map(flag => flag | common.flags.VERIFY_NULLFAIL);
 
     const msg = EMPTY;
@@ -161,7 +164,7 @@ describe('Magnetic', function() {
     isError(stack, Script.fromString('OP_CHECKDATASIGVERIFY'), 'NULLFAIL');
   });
 
-  it('should match signature w/o nullfail', async () => {
+  it('should match datasig on signature w/o nullfail', async () => {
     flags = flags.map(flag => flag & ~common.flags.VERIFY_NULLFAIL);
 
     const msg = EMPTY;
@@ -186,7 +189,7 @@ describe('Magnetic', function() {
       'CHECKDATASIGVERIFY');
   });
 
-  it('should fail on high_s signature with low_s', async () => {
+  it('should fail datasig on high_s signature with low_s', async () => {
     flags = flags.map(flag => flag | common.flags.VERIFY_LOW_S);
 
     const msg = EMPTY;
@@ -207,7 +210,7 @@ describe('Magnetic', function() {
     isError(stack, Script.fromString('OP_CHECKDATASIGVERIFY'), 'SIG_HIGH_S');
   });
 
-  it('should match high_s signature w/o low_s', async () => {
+  it('should match datasig on high_s signature w/o low_s', async () => {
     flags = flags.map(flag => flag & ~common.flags.VERIFY_LOW_S);
 
     const msg = EMPTY;
@@ -229,7 +232,7 @@ describe('Magnetic', function() {
       'CHECKDATASIGVERIFY');
   });
 
-  it('should fail on non dersig signature with dersig', async () => {
+  it('should fail datasig on non dersig signature with dersig', async () => {
     flags = flags.map(flag => flag | common.flags.VERIFY_DERSIG);
     flags = flags.map(flag => flag | common.flags.VERIFY_LOW_S);
     flags = flags.map(flag => flag | common.flags.VERIFY_STRICTENC);
@@ -246,7 +249,7 @@ describe('Magnetic', function() {
     isError(stack, Script.fromString('OP_CHECKDATASIGVERIFY'), 'SIG_DER');
   });
 
-  it('should match non dersig signature w/o dersig', async () => {
+  it('should match datasig on non dersig signature w/o dersig', async () => {
     flags = flags.map(flag => flag & ~common.flags.VERIFY_DERSIG);
     flags = flags.map(flag => flag & ~common.flags.VERIFY_LOW_S);
     flags = flags.map(flag => flag & ~common.flags.VERIFY_STRICTENC);
