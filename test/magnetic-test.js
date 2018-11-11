@@ -47,6 +47,7 @@ function isError(stack, script, error) {
   }
 }
 
+// TODO: add sigop count, activation tests
 describe('Magnetic', function() {
   it('should fail datasig on invalid stack', async () => {
     for (const op of ['OP_CHECKDATASIG', 'OP_CHECKDATASIGVERIFY']) {
