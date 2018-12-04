@@ -24,13 +24,14 @@ const node = new FullNode({
   workers: true,
   indexTX: true,
   indexAddress: true,
-  plugins: [require('../lib/wallet/plugin')]
+  plugins: [require('../lib/wallet/plugin'), require('../lib/indexer/plugin')]
 });
 
 const chain = node.chain;
 const miner = node.miner;
 const network = node.network;
 const {wdb} = node.require('walletdb');
+const {indexer} = node.require('indexer');
 
 // Magnetic Anomaly Activation time
 const MAA = network.block.magneticAnomalyActivationTime;
@@ -718,14 +719,14 @@ describe('Node', function() {
 
     const tx = block.txs[0];
     const hash = tx.hash();
-    const hasTX = await node.hasTX(hash);
+    const hasTX = await indexer.hasTX(hash);
 
     assert.strictEqual(hasTX, true);
 
-    const tx2 = await node.getTX(hash);
+    const tx2 = await indexer.getTX(hash);
     assert.strictEqual(tx.txid(), tx2.txid());
 
-    const meta = await node.getMeta(hash);
+    const meta = await indexer.getMeta(hash);
     assert.strictEqual(meta.tx.txid(), tx2.txid());
   });
 
@@ -752,11 +753,11 @@ describe('Node', function() {
 
     await new Promise(r => setTimeout(r, 300));
 
-    const txs = await node.getTXByAddress(addr);
+    const txs = await indexer.getTXByAddress(addr);
     const tx2 = txs[0];
     assert.strictEqual(tx.txid(), tx2.txid());
 
-    const coins = await node.getCoinsByAddress(addr);
+    const coins = await indexer.getCoinsByAddress(addr);
     const coin = coins[0];
     assert.strictEqual(tx.txid(), coin.txid());
   });

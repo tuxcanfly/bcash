@@ -19,7 +19,7 @@ const Outpoint = require('../lib/primitives/outpoint');
 const Input = require('../lib/primitives/input');
 const Script = require('../lib/script/script');
 const MemWallet = require('./util/memwallet');
-const MempoolIndexer = require('../lib/mempool/indexer');
+const MempoolIndexer = require('../lib/indexer/mempoolindexer');
 
 const VERIFY_NONE = common.flags.VERIFY_NONE;
 const SHTYPE = Script.hashType.ALL | Script.hashType.SIGHASH_FORKID;
@@ -314,7 +314,10 @@ describe('Mempool', function() {
       indexAddress: true
     });
 
-    const indexer = new MempoolIndexer({ mempool });
+    const indexer = new MempoolIndexer({
+      'mempool': mempool,
+      'chain': chain
+    });
 
     before(async () => {
       await mempool.open();
