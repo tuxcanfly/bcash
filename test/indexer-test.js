@@ -166,7 +166,7 @@ describe('Indexer', function() {
     assert.strictEqual(addrindexer.state.startHeight, 131);
   });
 
-  it('should have correct coinview for unconfirmed chain', async () => {
+  it('should have correct coinview for canonical txs', async () => {
     const job = await cpu.createJob();
     const block = await chain.getBlock(chain.height - 99);
     const cb = block.txs[0];
@@ -179,6 +179,7 @@ describe('Indexer', function() {
     wallet.sign(fund);
 
     const tx1 = fund.toTX();
+    let hash = null;
 
     // find a pair of dependent txs such that
     // tx2 < tx1 and tx2 spends tx1
@@ -186,12 +187,13 @@ describe('Indexer', function() {
     for (;;) {
       const spend = new MTX();
       spend.addTX(tx1, 0);
-      spend.addOutput(addr, random.randomRange(0, 1e8));
+      spend.addOutput(addr, random.randomRange(1e3, 1e8));
       wallet.sign(spend);
 
       const tx2 = spend.toTX();
       if (!less(tx2, tx1))
         continue;
+      hash = tx2.hash();
 
       job.pushTX(tx2);
       job.pushTX(tx1);
@@ -202,6 +204,12 @@ describe('Indexer', function() {
 
     const block1 = await job.mineAsync();
     assert(await chain.add(block1));
-    await addrindexer.getCoinsByAddress(addr);
+    const coins = await addrindexer.getCoinsByAddress(addr);
+    assert.strictEqual(coins.length, 1);
+    assert.bufferEqual(coins[0].hash, hash);
+    for (const coin of coins) {
+      const meta = await txindexer.getMeta(coin.hash);
+      assert.bufferEqual(meta.tx.hash(), coin.hash);
+    }
   });
 });
