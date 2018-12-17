@@ -203,13 +203,29 @@ describe('Indexer', function() {
     job.refresh();
 
     const block1 = await job.mineAsync();
-    assert(await chain.add(block1));
-    const coins = await addrindexer.getCoinsByAddress(addr);
-    assert.strictEqual(coins.length, 1);
-    assert.bufferEqual(coins[0].hash, hash);
-    for (const coin of coins) {
-      const meta = await txindexer.getMeta(coin.hash);
-      assert.bufferEqual(meta.tx.hash(), coin.hash);
+
+    {
+      let entry, block, view;
+
+      chain.once('connect', (_entry, _block, _view) => {
+        entry = _entry;
+        block = _block;
+        view = _view;
+      });
+
+      assert(await chain.add(block1));
+
+      const coins = await addrindexer.getCoinsByAddress(addr);
+      assert.strictEqual(coins.length, 1);
+      assert.bufferEqual(coins[0].hash, hash);
+      for (const coin of coins) {
+        const meta = await txindexer.getMeta(coin.hash);
+        assert.bufferEqual(meta.tx.hash(), coin.hash);
+      }
+
+      await addrindexer.unindexBlock(entry, block, view);
+      const coins1 = await addrindexer.getCoinsByAddress(addr);
+      assert.strictEqual(coins1.length, 0);
     }
   });
 });
